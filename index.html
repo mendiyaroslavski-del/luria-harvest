@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מערכת יצור יצוא ומלאי - אתרוגים</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap');
+
+  :root {
+    --green-deep: #1a3d2b;
+    --green-mid: #2d6a4f;
+    --green-light: #52b788;
+    --green-pale: #d8f3dc;
+    --gold: #c9a84c;
+    --gold-light: #f5e6c3;
+    --earth: #7c5c2e;
+    --cream: #faf7f0;
+    --white: #ffffff;
+    --gray-dark: #374151;
+    --gray-mid: #6b7280;
+    --gray-light: #e5e7eb;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --blue: #1e40af;
+    --blue-light: #dbeafe;
+    --shadow: 0 2px 12px rgba(26,61,43,0.12);
+    --shadow-lg: 0 8px 32px rgba(26,61,43,0.18);
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--cream);
+    color: var(--gray-dark);
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-mid) 100%);
+    color: white;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    box-shadow: var(--shadow-lg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .header-logo { font-size: 28px; }
+  .header-sub { font-size: 12px; font-weight: 300; opacity: 0.75; margin-top: 2px; }
+  .header-actions { display: flex; gap: 8px; }
+
+  /* TABS */
+  .tabs {
+    background: var(--white);
+    border-bottom: 2px solid var(--green-pale);
+    display: flex;
+    overflow-x: auto;
+    padding: 0 24px;
+    gap: 0;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 16px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-mid);
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab:hover { color: var(--green-mid); }
+  .tab.active {
+    color: var(--green-deep);
+    border-bottom-color: var(--green-light);
+    background: var(--green-pale);
+    border-radius: 8px 8px 0 0;
+  }
+  .tab-badge {
+    background: var(--green-mid);
+    color: white;
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* MAIN CONTENT */
+  .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--gray-light);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--green-pale);
+  }
+  .card-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--green-deep);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* FORMS */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .form-grid-wide { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--green-deep);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .field input, .field select, .field textarea {
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-light);
+    border-radius: 8px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    color: var(--gray-dark);
+    background: var(--cream);
+    transition: all 0.2s;
+    direction: rtl;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--green-light);
+    background: var(--white);
+    box-shadow: 0 0 0 3px rgba(82,183,136,0.15);
+  }
+  .field input[readonly] {
+    background: var(--green-pale);
+    color: var(--green-deep);
+    font-weight: 600;
+  }
+  .field .hint {
+    font-size: 11px;
+    color: var(--gray-mid);
+    margin-top: 2px;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary { background: var(--green-mid); color: white; box-shadow: 0 2px 8px rgba(45,106,79,0.3); }
+  .btn-primary:hover { background: var(--green-deep); }
+  .btn-secondary { background: var(--green-pale); color: var(--green-deep); border: 1.5px solid var(--green-light); }
+  .btn-secondary:hover { background: var(--green-light); color: white; }
+  .btn-gold { background: var(--gold); color: white; box-shadow: 0 2px 8px rgba(201,168,76,0.35); }
+  .btn-gold:hover { background: #b8962e; }
+  .btn-danger { background: var(--red-light); color: var(--red); border: 1.5px solid #fca5a5; }
+  .btn-danger:hover { background: var(--red); color: white; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+  .btn-icon { padding: 8px; }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* TABLES */
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--gray-light); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead { background: var(--green-deep); color: white; }
+  thead th {
+    padding: 12px 14px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--gray-light);
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--green-pale); }
+  tbody td { padding: 11px 14px; vertical-align: middle; }
+  .td-num { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .empty-state {
+    padding: 48px;
+    text-align: center;
+    color: var(--gray-mid);
+    font-size: 15px;
+  }
+  .empty-state span { font-size: 40px; display: block; margin-bottom: 12px; }
+
+  /* BADGES */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-green { background: var(--green-pale); color: var(--green-deep); }
+  .badge-gold { background: var(--gold-light); color: var(--earth); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-gray { background: var(--gray-light); color: var(--gray-mid); }
+
+  /* STAT CARDS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 20px;
+    border: 1px solid var(--gray-light);
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .stat-value { font-size: 28px; font-weight: 900; color: var(--green-deep); line-height: 1; margin-bottom: 6px; }
+  .stat-label { font-size: 12px; color: var(--gray-mid); font-weight: 500; }
+
+  /* INFO BOX */
+  .info-box {
+    background: var(--blue-light);
+    border: 1.5px solid #93c5fd;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--blue);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .warn-box {
+    background: var(--gold-light);
+    border: 1.5px solid var(--gold);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--earth);
+    margin-bottom: 16px;
+  }
+
+  /* TITHE SECTION */
+  .tithe-box {
+    background: linear-gradient(135deg, var(--green-pale), var(--gold-light));
+    border: 2px solid var(--green-light);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+  .tithe-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green-deep);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tithe-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* FLOW INDICATOR */
+  .flow-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--white);
+    border: 1.5px solid var(--gray-light);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-mid);
+  }
+  .flow-step.done { border-color: var(--green-light); color: var(--green-deep); background: var(--green-pale); }
+  .flow-arrow { color: var(--gray-light); font-size: 16px; }
+
+  /* SECTION DIVIDER */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0 16px;
+    color: var(--green-deep);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1.5px;
+    background: var(--green-pale);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .main { padding: 16px; }
+    .tithe-grid { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .header-title .header-sub { display: none; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 28px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: var(--shadow-lg);
+    direction: rtl;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; color: var(--green-deep); margin-bottom: 20px; }
+
+  /* ALERT */
+  .alert {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--green-deep);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .alert.show { opacity: 1; }
+
+  .text-red { color: var(--red); font-weight: 600; }
+  .text-green { color: var(--green-mid); font-weight: 600; }
+  hr { border: none; border-top: 1px solid var(--gray-light); margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">
+    <!-- Etrog SVG logo -->
+    <svg width="44" height="44" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+      <ellipse cx="100" cy="115" rx="62" ry="75" fill="#f5e6c3" stroke="#c9a84c" stroke-width="5"/>
+      <ellipse cx="100" cy="115" rx="50" ry="62" fill="#f5e6c3"/>
+      <!-- texture lines -->
+      <path d="M60 100 Q100 90 140 100" stroke="#c9a84c" stroke-width="2" fill="none" opacity="0.5"/>
+      <path d="M55 120 Q100 108 145 120" stroke="#c9a84c" stroke-width="2" fill="none" opacity="0.5"/>
+      <path d="M60 140 Q100 128 140 140" stroke="#c9a84c" stroke-width="2" fill="none" opacity="0.5"/>
+      <!-- pitom (top stem) -->
+      <path d="M100 40 Q95 30 92 20" stroke="#2d6a4f" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M100 40 Q108 28 112 18" stroke="#2d6a4f" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- leaf -->
+      <path d="M100 55 Q120 35 135 30 Q120 50 100 55Z" fill="#52b788" stroke="#2d6a4f" stroke-width="1.5"/>
+      <path d="M100 55 Q80 38 68 33 Q82 50 100 55Z" fill="#52b788" stroke="#2d6a4f" stroke-width="1.5"/>
+      <!-- decorative swirls -->
+      <path d="M38 80 Q30 70 35 60 Q42 68 38 80Z" fill="#c9a84c" opacity="0.6"/>
+      <path d="M162 80 Q170 70 165 60 Q158 68 162 80Z" fill="#c9a84c" opacity="0.6"/>
+    </svg>
+    <div>
+      <div style="font-size:17px;font-weight:900;letter-spacing:-0.3px">אתרוגי לוריא בע"מ</div>
+      <div class="header-sub">מערכת ניהול קטיף ומיון • Wisdom Intelligence Knowledge</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-gold btn-sm" onclick="exportExcel()">⬇ ייצוא Excel</button>
+    <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+      ⬆ ייבוא Excel
+      <input type="file" accept=".xlsx,.xls" onchange="importExcel(this)" style="display:none">
+    </label>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('plots')">🌿 שטחים</div>
+  <div class="tab" onclick="showTab('harvest')">
+    🌾 גליון 1 - קטיף
+    <span class="tab-badge" id="badge-harvest">0</span>
+  </div>
+  <div class="tab" onclick="showTab('sorting1')">
+    📦 גליון 2 - מיון ראשוני
+    <span class="tab-badge" id="badge-sorting1">0</span>
+  </div>
+  <div class="tab" onclick="showTab('sorting2')">
+    🔬 גליון 3 - מיון מסחרי
+    <span class="tab-badge" id="badge-sorting2">0</span>
+  </div>
+  <div class="tab" onclick="showTab('reports')">📊 דוחות</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ===== PLOTS TAB ===== -->
+  <div class="section active" id="tab-plots">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🌿 ניהול שטחים / חלקות</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="openPlotModal()">+ הוסף שטח</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportPDF('plots')">📄 ייצוא PDF</button>
+        </div>
+      </div>
+      <div class="info-box">
+        ℹ️ <div>גיל העצים קובע חובת מעשר: <strong>גיל 4 = ללא מעשר</strong> | <strong>גיל 5+ = מעשר חובה (12.5%-25%)</strong></div>
+      </div>
+      <div class="table-wrap">
+        <table id="plots-table">
+          <thead>
+            <tr>
+              <th>שם שטח/חלקה</th>
+              <th>גיל עצים (שנים)</th>
+              <th>חובת מעשר</th>
+              <th>הערות</th>
+              <th>פעולות</th>
+            </tr>
+          </thead>
+          <tbody id="plots-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HARVEST TAB ===== -->
+  <div class="section" id="tab-harvest">
+    <!-- Entry Form -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🌾 רישום קטיף חדש</div>
+        <span class="badge badge-green" id="next-harvest-num">K-001</span>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>תאריך קטיף</label>
+          <input type="date" id="h-date">
+        </div>
+        <div class="field">
+          <label>שטח / חלקה</label>
+          <select id="h-plot" onchange="onPlotChange()">
+            <option value="">— בחר שטח —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>גיל עצים</label>
+          <input type="text" id="h-age" readonly placeholder="יחושב אוטומטי">
+        </div>
+        <div class="field">
+          <label>מקור הפירות</label>
+          <select id="h-source" onchange="onSourceChange()">
+            <option value="עצמי">עצמי (מהחלקה)</option>
+            <option value="מבחוץ">מבחוץ (לצורך מעשר)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>כמות ברוטו (פירות)</label>
+          <input type="number" id="h-bruto" min="0" placeholder="0" oninput="calcTithe()">
+        </div>
+      </div>
+
+      <!-- TITHE BOX -->
+      <div class="tithe-box" id="tithe-box">
+        <div class="tithe-title">🕊️ חישוב מעשר</div>
+        <div class="tithe-grid">
+          <div class="field">
+            <label>אחוז מעשר מינימום (%)</label>
+            <input type="number" id="h-tithe-pct" min="0" max="100" step="0.5" value="12.5" placeholder="12.5" oninput="calcTithe()">
+            <span class="hint">בדרך כלל 12.5% עד 25%</span>
+          </div>
+          <div class="field">
+            <label>מעשר נדרש (חישוב)</label>
+            <input type="number" id="h-tithe-req" readonly placeholder="0">
+          </div>
+          <div class="field">
+            <label>מעשר בפועל (אופציונלי)</label>
+            <input type="number" id="h-tithe-actual" min="0" placeholder="ריק = השתמש בנדרש" oninput="calcTithe()">
+            <span class="hint">השאר ריק אם = לנדרש</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- NETO RESULT -->
+      <div class="form-grid">
+        <div class="field">
+          <label>נטו לבית אריזה</label>
+          <input type="number" id="h-neto" readonly placeholder="0">
+          <span class="hint" id="h-neto-hint"></span>
+        </div>
+        <div class="field">
+          <label>הערות</label>
+          <input type="text" id="h-notes" placeholder="הערות נוספות...">
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="saveHarvest()">💾 שמור קטיף</button>
+        <button class="btn btn-secondary" onclick="clearHarvestForm()">🔄 נקה טופס</button>
+      </div>
+    </div>
+
+    <!-- Harvest List -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📋 רשימת קטיפים</div>
+        <div class="btn-group" style="align-items:center">
+          <span class="badge badge-blue" id="harvest-count">0 רשומות</span>
+          <button class="btn btn-secondary btn-sm" onclick="exportPDF('harvest')">📄 ייצוא PDF</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>מס' קטיף</th>
+              <th>תאריך</th>
+              <th>שטח</th>
+              <th>גיל</th>
+              <th>מקור</th>
+              <th>ברוטו</th>
+              <th>מעשר%</th>
+              <th>מעשר נדרש</th>
+              <th>מעשר בפועל</th>
+              <th>נטו לאריזה</th>
+              <th>הערות</th>
+              <th>פעולות</th>
+            </tr>
+          </thead>
+          <tbody id="harvest-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SORTING 1 TAB ===== -->
+  <div class="section" id="tab-sorting1">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📦 מיון ראשוני</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="openSorting1Modal()">+ הוסף מיון</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportPDF('sorting1')">📄 ייצוא PDF</button>
+        </div>
+      </div>
+      <div class="info-box">
+        ℹ️ סהכ רמה 1 + רמה 2 + רמה 3 + פסולת חייב להיות ≤ נטו מהקטיף
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>מס' קטיף</th>
+              <th>תאריך מיון</th>
+              <th>נטו מקטיף</th>
+              <th>רמה 1 (מובחר)</th>
+              <th>רמה 2 (בינוני)</th>
+              <th>רמה 3 (מסחרי)</th>
+              <th>פסולת</th>
+              <th>סהכ</th>
+              <th>הערות</th>
+              <th>פעולות</th>
+            </tr>
+          </thead>
+          <tbody id="sorting1-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SORTING 2 TAB ===== -->
+  <div class="section" id="tab-sorting2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔬 מיון מסחרי (מרמה 3)</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="openSorting2Modal()">+ הוסף מיון מסחרי</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportPDF('sorting2')">📄 ייצוא PDF</button>
+        </div>
+      </div>
+      <div class="info-box">
+        ℹ️ מיון מסחרי מקבל את הפירות מרמה 3 של המיון הראשוני ומחלק אותם לתת-רמות
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>מס' קטיף</th>
+              <th>תאריך</th>
+              <th>קלט (רמה 3)</th>
+              <th>מסחרי א'</th>
+              <th>מסחרי ב'</th>
+              <th>מסחרי ג'</th>
+              <th>פסולת</th>
+              <th>סהכ</th>
+              <th>הערות</th>
+              <th>פעולות</th>
+            </tr>
+          </thead>
+          <tbody id="sorting2-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== REPORTS TAB ===== -->
+  <div class="section" id="tab-reports">
+    <div class="stats-grid" id="report-stats"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📊 מעקב מלאי - מהקטיף עד המיון האחרון</div>
+        <button class="btn btn-secondary btn-sm" onclick="exportPDF('reports')">📄 ייצוא PDF</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>מס' קטיף</th>
+              <th>תאריך</th>
+              <th>שטח</th>
+              <th>ברוטו</th>
+              <th>מעשר</th>
+              <th>נטו לאריזה</th>
+              <th>רמה 1</th>
+              <th>רמה 2</th>
+              <th>רמה 3</th>
+              <th>מסח' א'</th>
+              <th>מסח' ב'</th>
+              <th>מסח' ג'</th>
+              <th>פסולת כוללת</th>
+              <th>סטטוס</th>
+            </tr>
+          </thead>
+          <tbody id="report-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- Plot Modal -->
+<div class="modal-overlay" id="plot-modal">
+  <div class="modal">
+    <div class="modal-title">🌿 <span id="plot-modal-title">הוסף שטח חדש</span></div>
+    <input type="hidden" id="pm-id">
+    <div class="field" style="margin-bottom:14px">
+      <label>שם שטח / חלקה</label>
+      <input type="text" id="pm-name" placeholder="לדוגמה: חלקה צפון, שטח A">
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>גיל עצים (שנים)</label>
+      <input type="number" id="pm-age" min="1" max="50" placeholder="5">
+    </div>
+    <div class="field" style="margin-bottom:20px">
+      <label>הערות</label>
+      <input type="text" id="pm-notes" placeholder="הערות אופציונליות">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="savePlot()">💾 שמור</button>
+      <button class="btn btn-secondary" onclick="closeModal('plot-modal')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sorting 1 Modal -->
+<div class="modal-overlay" id="s1-modal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-title">📦 מיון ראשוני</div>
+    <input type="hidden" id="s1-id">
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field">
+        <label>בחר קטיף</label>
+        <select id="s1-harvest" onchange="onS1HarvestChange()">
+          <option value="">— בחר קטיף —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>תאריך מיון</label>
+        <input type="date" id="s1-date">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>נטו מהקטיף (קלט)</label>
+      <input type="number" id="s1-input" readonly placeholder="0">
+    </div>
+    <div class="section-divider">חלוקת המיון</div>
+    <div class="tithe-grid" style="margin-bottom:14px">
+      <div class="field">
+        <label>🥇 רמה 1 - מובחר</label>
+        <input type="number" id="s1-g1" min="0" value="0" oninput="calcS1()">
+      </div>
+      <div class="field">
+        <label>🥈 רמה 2 - בינוני</label>
+        <input type="number" id="s1-g2" min="0" value="0" oninput="calcS1()">
+      </div>
+      <div class="field">
+        <label>🥉 רמה 3 - מסחרי</label>
+        <input type="number" id="s1-g3" min="0" value="0" oninput="calcS1()">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field">
+        <label>פסולת / נזרק</label>
+        <input type="number" id="s1-waste" min="0" value="0" oninput="calcS1()">
+      </div>
+      <div class="field">
+        <label>סהכ (בדיקה)</label>
+        <input type="number" id="s1-total" readonly>
+      </div>
+    </div>
+    <div id="s1-warning" class="warn-box" style="display:none"></div>
+    <div class="field" style="margin-bottom:16px">
+      <label>הערות</label>
+      <input type="text" id="s1-notes" placeholder="הערות...">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="saveSorting1()">💾 שמור</button>
+      <button class="btn btn-secondary" onclick="closeModal('s1-modal')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sorting 2 Modal -->
+<div class="modal-overlay" id="s2-modal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-title">🔬 מיון מסחרי</div>
+    <input type="hidden" id="s2-id">
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field">
+        <label>בחר מיון ראשוני (קטיף)</label>
+        <select id="s2-sorting" onchange="onS2SortingChange()">
+          <option value="">— בחר —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>תאריך</label>
+        <input type="date" id="s2-date">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>כמות רמה 3 (קלט)</label>
+      <input type="number" id="s2-input" readonly placeholder="0">
+    </div>
+    <div class="section-divider">חלוקת מסחרי</div>
+    <div class="tithe-grid" style="margin-bottom:14px">
+      <div class="field">
+        <label>מסחרי א'</label>
+        <input type="number" id="s2-g1" min="0" value="0" oninput="calcS2()">
+      </div>
+      <div class="field">
+        <label>מסחרי ב'</label>
+        <input type="number" id="s2-g2" min="0" value="0" oninput="calcS2()">
+      </div>
+      <div class="field">
+        <label>מסחרי ג'</label>
+        <input type="number" id="s2-g3" min="0" value="0" oninput="calcS2()">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field">
+        <label>פסולת / נזרק</label>
+        <input type="number" id="s2-waste" min="0" value="0" oninput="calcS2()">
+      </div>
+      <div class="field">
+        <label>סהכ (בדיקה)</label>
+        <input type="number" id="s2-total" readonly>
+      </div>
+    </div>
+    <div id="s2-warning" class="warn-box" style="display:none"></div>
+    <div class="field" style="margin-bottom:16px">
+      <label>הערות</label>
+      <input type="text" id="s2-notes" placeholder="הערות...">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="saveSorting2()">💾 שמור</button>
+      <button class="btn btn-secondary" onclick="closeModal('s2-modal')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- Alert -->
+<div class="alert" id="alert"></div>
+
+<script>
+// ========== DATA ==========
+let data = {
+  plots: [],
+  harvests: [],
+  sortings1: [],
+  sortings2: []
+};
+
+// ========== STORAGE ==========
+function save() {
+  localStorage.setItem('etrog-system', JSON.stringify(data));
+}
+
+function load() {
+  const s = localStorage.getItem('etrog-system');
+  if (s) {
+    try { data = JSON.parse(s); } catch(e) {}
+  }
+  // Set today's date on forms
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('h-date').value = today;
+  document.getElementById('s1-date').value = today;
+  document.getElementById('s2-date').value = today;
+}
+
+// ========== TABS ==========
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.tab');
+  const map = ['plots','harvest','sorting1','sorting2','reports'];
+  tabs[map.indexOf(name)].classList.add('active');
+  if (name === 'reports') renderReports();
+}
+
+// ========== ALERT ==========
+function showAlert(msg) {
+  const el = document.getElementById('alert');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ========== MODAL ==========
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ========== PLOTS ==========
+function openPlotModal(id) {
+  document.getElementById('pm-id').value = id || '';
+  document.getElementById('plot-modal-title').textContent = id ? 'עריכת שטח' : 'הוסף שטח חדש';
+  if (id) {
+    const p = data.plots.find(x => x.id === id);
+    document.getElementById('pm-name').value = p.name;
+    document.getElementById('pm-age').value = p.age;
+    document.getElementById('pm-notes').value = p.notes || '';
+  } else {
+    document.getElementById('pm-name').value = '';
+    document.getElementById('pm-age').value = '';
+    document.getElementById('pm-notes').value = '';
+  }
+  openModal('plot-modal');
+}
+
+function savePlot() {
+  const name = document.getElementById('pm-name').value.trim();
+  const age = parseInt(document.getElementById('pm-age').value);
+  const notes = document.getElementById('pm-notes').value.trim();
+  if (!name) { showAlert('⚠️ יש להזין שם שטח'); return; }
+  if (!age || age < 1) { showAlert('⚠️ יש להזין גיל תקין'); return; }
+
+  const id = document.getElementById('pm-id').value;
+  if (id) {
+    const p = data.plots.find(x => x.id === id);
+    p.name = name; p.age = age; p.notes = notes;
+  } else {
+    data.plots.push({ id: Date.now().toString(), name, age, notes });
+  }
+  save();
+  closeModal('plot-modal');
+  renderPlots();
+  refreshPlotSelects();
+  showAlert('✅ שטח נשמר');
+}
+
+function deletePlot(id) {
+  if (!confirm('למחוק שטח זה?')) return;
+  data.plots = data.plots.filter(x => x.id !== id);
+  save(); renderPlots(); refreshPlotSelects();
+  showAlert('🗑️ שטח נמחק');
+}
+
+function renderPlots() {
+  const tbody = document.getElementById('plots-tbody');
+  if (!data.plots.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><span>🌿</span>אין שטחים. הוסף שטח ראשון.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.plots.map(p => `
+    <tr>
+      <td><strong>${p.name}</strong></td>
+      <td class="td-num">${p.age} שנים</td>
+      <td>${p.age >= 5
+        ? '<span class="badge badge-gold">מעשר חובה 🕊️</span>'
+        : p.age === 4
+          ? '<span class="badge badge-green">ללא מעשר ✓</span>'
+          : '<span class="badge badge-gray">בדוק</span>'
+      }</td>
+      <td>${p.notes || '—'}</td>
+      <td>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="openPlotModal('${p.id}')">✏️ ערוך</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePlot('${p.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function refreshPlotSelects() {
+  const sel = document.getElementById('h-plot');
+  sel.innerHTML = '<option value="">— בחר שטח —</option>' +
+    data.plots.map(p => `<option value="${p.id}">${p.name} (גיל ${p.age})</option>`).join('');
+}
+
+// ========== HARVEST ==========
+function getNextHarvestNum() {
+  const nums = data.harvests.map(h => parseInt(h.number.replace('K-', ''))).filter(n => !isNaN(n));
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return 'K-' + String(next).padStart(3, '0');
+}
+
+function updateNextNum() {
+  document.getElementById('next-harvest-num').textContent = getNextHarvestNum();
+}
+
+function onPlotChange() {
+  const pid = document.getElementById('h-plot').value;
+  const plot = data.plots.find(x => x.id === pid);
+  if (plot) {
+    document.getElementById('h-age').value = plot.age + ' שנים';
+  } else {
+    document.getElementById('h-age').value = '';
+  }
+  calcTithe();
+}
+
+function onSourceChange() {
+  calcTithe();
+}
+
+function calcTithe() {
+  const pid = document.getElementById('h-plot').value;
+  const plot = data.plots.find(x => x.id === pid);
+  const bruto = parseInt(document.getElementById('h-bruto').value) || 0;
+  const source = document.getElementById('h-source').value;
+  const titheBox = document.getElementById('tithe-box');
+  const pct = parseFloat(document.getElementById('h-tithe-pct').value) || 12.5;
+  const titheActualVal = document.getElementById('h-tithe-actual').value;
+  const titheActual = titheActualVal !== '' ? parseFloat(titheActualVal) : null;
+
+  let neto = bruto;
+  let hint = '';
+
+  if (!plot) {
+    document.getElementById('h-tithe-req').value = '';
+    document.getElementById('h-neto').value = '';
+    document.getElementById('h-neto-hint').textContent = '';
+    return;
+  }
+
+  if (source === 'מבחוץ') {
+    // External fruit - tithe doesn't reduce own harvest
+    titheBox.style.display = 'block';
+    const titheReq = Math.ceil(bruto * pct / 100);
+    document.getElementById('h-tithe-req').value = titheReq;
+    // For external, neto = bruto (the fruit came from outside, tithe is separate act)
+    neto = bruto;
+    hint = '⚠️ פירות מבחוץ - המעשר לא מורד מהכמות עצמה';
+  } else if (plot.age >= 5) {
+    titheBox.style.display = 'block';
+    const titheReq = Math.ceil(bruto * pct / 100);
+    document.getElementById('h-tithe-req').value = titheReq;
+    const titheUsed = titheActual !== null ? titheActual : titheReq;
+    neto = bruto - titheUsed;
+    hint = `ברוטו ${bruto} − מעשר ${titheUsed} = נטו לאריזה`;
+  } else if (plot.age === 4) {
+    titheBox.style.display = 'none';
+    document.getElementById('h-tithe-req').value = 0;
+    neto = bruto;
+    hint = 'גיל 4 - ללא מעשר. ברוטו = נטו';
+  } else {
+    titheBox.style.display = 'none';
+    neto = bruto;
+    hint = 'גיל ' + plot.age + ' - בדוק חובות הלכתיות';
+  }
+
+  document.getElementById('h-neto').value = neto > 0 ? neto : 0;
+  document.getElementById('h-neto-hint').textContent = hint;
+}
+
+function saveHarvest() {
+  const pid = document.getElementById('h-plot').value;
+  const plot = data.plots.find(x => x.id === pid);
+  const date = document.getElementById('h-date').value;
+  const bruto = parseInt(document.getElementById('h-bruto').value) || 0;
+  const source = document.getElementById('h-source').value;
+
+  if (!date) { showAlert('⚠️ יש לבחור תאריך'); return; }
+  if (!plot) { showAlert('⚠️ יש לבחור שטח'); return; }
+  if (!bruto) { showAlert('⚠️ יש להזין כמות ברוטו'); return; }
+
+  const titheActualVal = document.getElementById('h-tithe-actual').value;
+  const titheActual = titheActualVal !== '' ? parseFloat(titheActualVal) : null;
+  const titheReq = parseInt(document.getElementById('h-tithe-req').value) || 0;
+  const neto = parseInt(document.getElementById('h-neto').value) || bruto;
+  const notes = document.getElementById('h-notes').value.trim();
+  const pct = parseFloat(document.getElementById('h-tithe-pct').value) || 12.5;
+
+  data.harvests.push({
+    id: Date.now().toString(),
+    number: getNextHarvestNum(),
+    date, plotId: pid, plotName: plot.name,
+    plotAge: plot.age, source, bruto,
+    tithePct: plot.age >= 5 ? pct : 0,
+    titheReq: plot.age >= 5 ? titheReq : 0,
+    titheActual, neto, notes
+  });
+
+  save();
+  renderHarvests();
+  clearHarvestForm();
+  updateNextNum();
+  updateBadges();
+  showAlert('✅ קטיף ' + data.harvests[data.harvests.length-1].number + ' נשמר');
+}
+
+function deleteHarvest(id) {
+  if (!confirm('למחוק קטיף זה?')) return;
+  data.harvests = data.harvests.filter(x => x.id !== id);
+  // Remove related sortings
+  const s1ids = data.sortings1.filter(s => s.harvestId === id).map(s => s.id);
+  data.sortings1 = data.sortings1.filter(s => s.harvestId !== id);
+  data.sortings2 = data.sortings2.filter(s => !s1ids.includes(s.sorting1Id));
+  save(); renderHarvests(); renderSortings1(); renderSortings2(); updateBadges();
+  showAlert('🗑️ קטיף נמחק');
+}
+
+function clearHarvestForm() {
+  document.getElementById('h-plot').value = '';
+  document.getElementById('h-age').value = '';
+  document.getElementById('h-bruto').value = '';
+  document.getElementById('h-tithe-pct').value = '12.5';
+  document.getElementById('h-tithe-actual').value = '';
+  document.getElementById('h-tithe-req').value = '';
+  document.getElementById('h-neto').value = '';
+  document.getElementById('h-neto-hint').textContent = '';
+  document.getElementById('h-notes').value = '';
+  document.getElementById('h-source').value = 'עצמי';
+  document.getElementById('tithe-box').style.display = 'none';
+}
+
+function renderHarvests() {
+  const tbody = document.getElementById('harvest-tbody');
+  document.getElementById('harvest-count').textContent = data.harvests.length + ' רשומות';
+  if (!data.harvests.length) {
+    tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state"><span>🌾</span>אין קטיפים רשומים</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.harvests.map(h => `
+    <tr>
+      <td><strong>${h.number}</strong></td>
+      <td>${h.date}</td>
+      <td>${h.plotName}</td>
+      <td>${h.plotAge}</td>
+      <td>${h.source === 'מבחוץ'
+        ? '<span class="badge badge-blue">מבחוץ</span>'
+        : '<span class="badge badge-green">עצמי</span>'}</td>
+      <td class="td-num">${h.bruto.toLocaleString()}</td>
+      <td>${h.tithePct ? h.tithePct + '%' : '—'}</td>
+      <td class="td-num">${h.titheReq ? h.titheReq.toLocaleString() : '—'}</td>
+      <td class="td-num">${h.titheActual !== null ? h.titheActual.toLocaleString() : '—'}</td>
+      <td class="td-num text-green">${h.neto.toLocaleString()}</td>
+      <td>${h.notes || '—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteHarvest('${h.id}')">🗑️</button></td>
+    </tr>
+  `).join('');
+}
+
+// ========== SORTING 1 ==========
+function openSorting1Modal(id) {
+  // Populate harvest select (only those without sorting1)
+  const taken = data.sortings1.map(s => s.harvestId);
+  const available = data.harvests.filter(h => !taken.includes(h.id));
+  const sel = document.getElementById('s1-harvest');
+  sel.innerHTML = '<option value="">— בחר קטיף —</option>' +
+    available.map(h => `<option value="${h.id}">${h.number} | ${h.date} | ${h.plotName} | נטו: ${h.neto.toLocaleString()}</option>`).join('');
+
+  if (id) {
+    const s = data.sortings1.find(x => x.id === id);
+    document.getElementById('s1-id').value = id;
+    // Allow editing existing
+    sel.innerHTML += `<option value="${s.harvestId}" selected>${s.harvestNumber}</option>`;
+    sel.value = s.harvestId;
+    onS1HarvestChange();
+    document.getElementById('s1-g1').value = s.g1;
+    document.getElementById('s1-g2').value = s.g2;
+    document.getElementById('s1-g3').value = s.g3;
+    document.getElementById('s1-waste').value = s.waste;
+    document.getElementById('s1-notes').value = s.notes || '';
+    document.getElementById('s1-date').value = s.date;
+    calcS1();
+  } else {
+    document.getElementById('s1-id').value = '';
+    document.getElementById('s1-input').value = '';
+    ['s1-g1','s1-g2','s1-g3','s1-waste'].forEach(f => document.getElementById(f).value = 0);
+    document.getElementById('s1-total').value = '';
+    document.getElementById('s1-notes').value = '';
+    document.getElementById('s1-warning').style.display = 'none';
+  }
+  openModal('s1-modal');
+}
+
+function onS1HarvestChange() {
+  const hid = document.getElementById('s1-harvest').value;
+  const h = data.harvests.find(x => x.id === hid);
+  document.getElementById('s1-input').value = h ? h.neto : '';
+  calcS1();
+}
+
+function calcS1() {
+  const g1 = parseInt(document.getElementById('s1-g1').value) || 0;
+  const g2 = parseInt(document.getElementById('s1-g2').value) || 0;
+  const g3 = parseInt(document.getElementById('s1-g3').value) || 0;
+  const waste = parseInt(document.getElementById('s1-waste').value) || 0;
+  const total = g1 + g2 + g3 + waste;
+  const input = parseInt(document.getElementById('s1-input').value) || 0;
+  document.getElementById('s1-total').value = total;
+  const warn = document.getElementById('s1-warning');
+  if (input && total > input) {
+    warn.style.display = 'block';
+    warn.textContent = `⚠️ סהכ (${total.toLocaleString()}) עולה על הנטו מהקטיף (${input.toLocaleString()})!`;
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+function saveSorting1() {
+  const hid = document.getElementById('s1-harvest').value;
+  const h = data.harvests.find(x => x.id === hid);
+  const date = document.getElementById('s1-date').value;
+  if (!hid || !h) { showAlert('⚠️ יש לבחור קטיף'); return; }
+  const g1 = parseInt(document.getElementById('s1-g1').value) || 0;
+  const g2 = parseInt(document.getElementById('s1-g2').value) || 0;
+  const g3 = parseInt(document.getElementById('s1-g3').value) || 0;
+  const waste = parseInt(document.getElementById('s1-waste').value) || 0;
+  const total = g1 + g2 + g3 + waste;
+  if (total > h.neto) { showAlert('⚠️ הסכום עולה על הנטו מהקטיף'); return; }
+  const notes = document.getElementById('s1-notes').value.trim();
+  const existId = document.getElementById('s1-id').value;
+
+  if (existId) {
+    const s = data.sortings1.find(x => x.id === existId);
+    Object.assign(s, { date, g1, g2, g3, waste, notes });
+  } else {
+    data.sortings1.push({
+      id: Date.now().toString(), harvestId: hid,
+      harvestNumber: h.number, plotName: h.plotName,
+      inputNeto: h.neto, date, g1, g2, g3, waste, notes
+    });
+  }
+  save(); closeModal('s1-modal'); renderSortings1(); updateBadges();
+  showAlert('✅ מיון ראשוני נשמר');
+}
+
+function deleteSorting1(id) {
+  if (!confirm('למחוק מיון זה? גם המיון המסחרי הקשור יימחק.')) return;
+  data.sortings2 = data.sortings2.filter(s => s.sorting1Id !== id);
+  data.sortings1 = data.sortings1.filter(x => x.id !== id);
+  save(); renderSortings1(); renderSortings2(); updateBadges();
+  showAlert('🗑️ מיון נמחק');
+}
+
+function renderSortings1() {
+  const tbody = document.getElementById('sorting1-tbody');
+  if (!data.sortings1.length) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><span>📦</span>אין מיונים ראשוניים</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.sortings1.map(s => {
+    const total = s.g1 + s.g2 + s.g3 + s.waste;
+    const ok = total <= s.inputNeto;
+    return `<tr>
+      <td><strong>${s.harvestNumber}</strong></td>
+      <td>${s.date}</td>
+      <td class="td-num">${s.inputNeto.toLocaleString()}</td>
+      <td class="td-num text-green">${s.g1.toLocaleString()}</td>
+      <td class="td-num">${s.g2.toLocaleString()}</td>
+      <td class="td-num">${s.g3.toLocaleString()}</td>
+      <td class="td-num text-red">${s.waste.toLocaleString()}</td>
+      <td class="td-num ${ok ? 'text-green' : 'text-red'}">${total.toLocaleString()}</td>
+      <td>${s.notes || '—'}</td>
+      <td>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="openSorting1Modal('${s.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSorting1('${s.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ========== SORTING 2 ==========
+function openSorting2Modal(id) {
+  const taken = data.sortings2.map(s => s.sorting1Id);
+  const available = data.sortings1.filter(s => !taken.includes(s.id) && s.g3 > 0);
+  const sel = document.getElementById('s2-sorting');
+  sel.innerHTML = '<option value="">— בחר מיון ראשוני —</option>' +
+    available.map(s => `<option value="${s.id}">${s.harvestNumber} | ${s.date} | רמה 3: ${s.g3.toLocaleString()}</option>`).join('');
+
+  if (id) {
+    const s2 = data.sortings2.find(x => x.id === id);
+    document.getElementById('s2-id').value = id;
+    sel.innerHTML += `<option value="${s2.sorting1Id}" selected>קטיף ${s2.harvestNumber}</option>`;
+    sel.value = s2.sorting1Id;
+    onS2SortingChange();
+    document.getElementById('s2-g1').value = s2.g1;
+    document.getElementById('s2-g2').value = s2.g2;
+    document.getElementById('s2-g3').value = s2.g3;
+    document.getElementById('s2-waste').value = s2.waste;
+    document.getElementById('s2-notes').value = s2.notes || '';
+    document.getElementById('s2-date').value = s2.date;
+    calcS2();
+  } else {
+    document.getElementById('s2-id').value = '';
+    document.getElementById('s2-input').value = '';
+    ['s2-g1','s2-g2','s2-g3','s2-waste'].forEach(f => document.getElementById(f).value = 0);
+    document.getElementById('s2-total').value = '';
+    document.getElementById('s2-notes').value = '';
+    document.getElementById('s2-warning').style.display = 'none';
+  }
+  openModal('s2-modal');
+}
+
+function onS2SortingChange() {
+  const sid = document.getElementById('s2-sorting').value;
+  const s = data.sortings1.find(x => x.id === sid);
+  document.getElementById('s2-input').value = s ? s.g3 : '';
+  calcS2();
+}
+
+function calcS2() {
+  const g1 = parseInt(document.getElementById('s2-g1').value) || 0;
+  const g2 = parseInt(document.getElementById('s2-g2').value) || 0;
+  const g3 = parseInt(document.getElementById('s2-g3').value) || 0;
+  const waste = parseInt(document.getElementById('s2-waste').value) || 0;
+  const total = g1 + g2 + g3 + waste;
+  const input = parseInt(document.getElementById('s2-input').value) || 0;
+  document.getElementById('s2-total').value = total;
+  const warn = document.getElementById('s2-warning');
+  if (input && total > input) {
+    warn.style.display = 'block';
+    warn.textContent = `⚠️ סהכ (${total.toLocaleString()}) עולה על רמה 3 מהמיון (${input.toLocaleString()})!`;
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+function saveSorting2() {
+  const sid = document.getElementById('s2-sorting').value;
+  const s1 = data.sortings1.find(x => x.id === sid);
+  const date = document.getElementById('s2-date').value;
+  if (!sid || !s1) { showAlert('⚠️ יש לבחור מיון ראשוני'); return; }
+  const g1 = parseInt(document.getElementById('s2-g1').value) || 0;
+  const g2 = parseInt(document.getElementById('s2-g2').value) || 0;
+  const g3 = parseInt(document.getElementById('s2-g3').value) || 0;
+  const waste = parseInt(document.getElementById('s2-waste').value) || 0;
+  const total = g1 + g2 + g3 + waste;
+  if (total > s1.g3) { showAlert('⚠️ הסכום עולה על רמה 3'); return; }
+  const notes = document.getElementById('s2-notes').value.trim();
+  const existId = document.getElementById('s2-id').value;
+
+  // Get harvest info
+  const h = data.harvests.find(x => x.id === s1.harvestId);
+
+  if (existId) {
+    const s2 = data.sortings2.find(x => x.id === existId);
+    Object.assign(s2, { date, g1, g2, g3, waste, notes });
+  } else {
+    data.sortings2.push({
+      id: Date.now().toString(), sorting1Id: sid,
+      harvestId: s1.harvestId, harvestNumber: s1.harvestNumber,
+      plotName: s1.plotName, inputG3: s1.g3, date, g1, g2, g3, waste, notes
+    });
+  }
+  save(); closeModal('s2-modal'); renderSortings2(); updateBadges();
+  showAlert('✅ מיון מסחרי נשמר');
+}
+
+function deleteSorting2(id) {
+  if (!confirm('למחוק?')) return;
+  data.sortings2 = data.sortings2.filter(x => x.id !== id);
+  save(); renderSortings2(); updateBadges();
+  showAlert('🗑️ נמחק');
+}
+
+function renderSortings2() {
+  const tbody = document.getElementById('sorting2-tbody');
+  if (!data.sortings2.length) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><span>🔬</span>אין מיונים מסחריים</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.sortings2.map(s => {
+    const total = s.g1 + s.g2 + s.g3 + s.waste;
+    const ok = total <= s.inputG3;
+    return `<tr>
+      <td><strong>${s.harvestNumber}</strong></td>
+      <td>${s.date}</td>
+      <td class="td-num">${s.inputG3.toLocaleString()}</td>
+      <td class="td-num text-green">${s.g1.toLocaleString()}</td>
+      <td class="td-num">${s.g2.toLocaleString()}</td>
+      <td class="td-num">${s.g3.toLocaleString()}</td>
+      <td class="td-num text-red">${s.waste.toLocaleString()}</td>
+      <td class="td-num ${ok ? 'text-green' : 'text-red'}">${total.toLocaleString()}</td>
+      <td>${s.notes || '—'}</td>
+      <td>
+        <div class="btn-group">
+          <button class="btn btn-secondary btn-sm" onclick="openSorting2Modal('${s.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSorting2('${s.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ========== BADGES ==========
+function updateBadges() {
+  document.getElementById('badge-harvest').textContent = data.harvests.length;
+  document.getElementById('badge-sorting1').textContent = data.sortings1.length;
+  document.getElementById('badge-sorting2').textContent = data.sortings2.length;
+}
+
+// ========== REPORTS ==========
+function renderReports() {
+  // Stats
+  const totalBruto = data.harvests.reduce((a,h) => a + h.bruto, 0);
+  const totalNeto = data.harvests.reduce((a,h) => a + h.neto, 0);
+  const totalTithe = data.harvests.reduce((a,h) => a + (h.titheActual !== null ? h.titheActual : h.titheReq), 0);
+  const totalG1 = data.sortings1.reduce((a,s) => a + s.g1, 0);
+  const totalG2 = data.sortings1.reduce((a,s) => a + s.g2, 0);
+  const totalG3 = data.sortings1.reduce((a,s) => a + s.g3, 0);
+
+  document.getElementById('report-stats').innerHTML = [
+    ['קטיפים', data.harvests.length, '🌾'],
+    ['סהכ ברוטו', totalBruto.toLocaleString(), '📊'],
+    ['סהכ מעשר', totalTithe.toLocaleString(), '🕊️'],
+    ['נטו לאריזה', totalNeto.toLocaleString(), '📦'],
+    ['מובחר (1)', totalG1.toLocaleString(), '🥇'],
+    ['בינוני (2)', totalG2.toLocaleString(), '🥈'],
+    ['מסחרי (3)', totalG3.toLocaleString(), '🥉'],
+  ].map(([label, val, icon]) => `
+    <div class="stat-card">
+      <div style="font-size:24px;margin-bottom:4px">${icon}</div>
+      <div class="stat-value">${val}</div>
+      <div class="stat-label">${label}</div>
+    </div>
+  `).join('');
+
+  // Full trace table
+  const tbody = document.getElementById('report-tbody');
+  if (!data.harvests.length) {
+    tbody.innerHTML = '<tr><td colspan="14"><div class="empty-state"><span>📊</span>אין נתונים</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.harvests.map(h => {
+    const s1 = data.sortings1.find(s => s.harvestId === h.id);
+    const s2 = s1 ? data.sortings2.find(s => s.sorting1Id === s1.id) : null;
+    const titheUsed = h.titheActual !== null ? h.titheActual : h.titheReq;
+    const waste1 = s1 ? s1.waste : 0;
+    const waste2 = s2 ? s2.waste : 0;
+    const totalWaste = waste1 + waste2;
+
+    let status = '<span class="badge badge-gold">קטיף בלבד</span>';
+    if (s1 && s2) status = '<span class="badge badge-green">✅ הושלם</span>';
+    else if (s1) status = '<span class="badge badge-blue">מיון ראשוני</span>';
+
+    return `<tr>
+      <td><strong>${h.number}</strong></td>
+      <td>${h.date}</td>
+      <td>${h.plotName}</td>
+      <td class="td-num">${h.bruto.toLocaleString()}</td>
+      <td class="td-num">${titheUsed ? titheUsed.toLocaleString() : '—'}</td>
+      <td class="td-num text-green">${h.neto.toLocaleString()}</td>
+      <td class="td-num">${s1 ? s1.g1.toLocaleString() : '—'}</td>
+      <td class="td-num">${s1 ? s1.g2.toLocaleString() : '—'}</td>
+      <td class="td-num">${s1 ? s1.g3.toLocaleString() : '—'}</td>
+      <td class="td-num">${s2 ? s2.g1.toLocaleString() : '—'}</td>
+      <td class="td-num">${s2 ? s2.g2.toLocaleString() : '—'}</td>
+      <td class="td-num">${s2 ? s2.g3.toLocaleString() : '—'}</td>
+      <td class="td-num text-red">${totalWaste ? totalWaste.toLocaleString() : '—'}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ========== EXCEL EXPORT ==========
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1 - Harvests
+  const h1 = [['מס קטיף','תאריך','שטח','גיל','מקור','ברוטו','מעשר%','מעשר נדרש','מעשר בפועל','נטו לאריזה','הערות']];
+  data.harvests.forEach(h => {
+    h1.push([h.number, h.date, h.plotName, h.plotAge, h.source, h.bruto,
+      h.tithePct||0, h.titheReq||0,
+      h.titheActual !== null ? h.titheActual : '',
+      h.neto, h.notes||'']);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(h1), 'גליון 1 - קטיף');
+
+  // Sheet 2 - Sorting 1
+  const h2 = [['מס קטיף','תאריך מיון','נטו קלט','רמה 1','רמה 2','רמה 3','פסולת','סהכ','הערות']];
+  data.sortings1.forEach(s => {
+    h2.push([s.harvestNumber, s.date, s.inputNeto, s.g1, s.g2, s.g3, s.waste, s.g1+s.g2+s.g3+s.waste, s.notes||'']);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(h2), 'גליון 2 - מיון ראשוני');
+
+  // Sheet 3 - Sorting 2
+  const h3 = [['מס קטיף','תאריך','קלט רמה 3','מסחרי א','מסחרי ב','מסחרי ג','פסולת','סהכ','הערות']];
+  data.sortings2.forEach(s => {
+    h3.push([s.harvestNumber, s.date, s.inputG3, s.g1, s.g2, s.g3, s.waste, s.g1+s.g2+s.g3+s.waste, s.notes||'']);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(h3), 'גליון 3 - מיון מסחרי');
+
+  // Plots
+  const hp = [['שם שטח','גיל','הערות']];
+  data.plots.forEach(p => hp.push([p.name, p.age, p.notes||'']));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hp), 'שטחים');
+
+  XLSX.writeFile(wb, 'אתרוגי-לוריא-' + new Date().toISOString().split('T')[0] + '.xlsx');
+  showAlert('✅ קובץ Excel יוצא בהצלחה');
+}
+
+// ========== EXCEL IMPORT ==========
+function importExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+
+      // Import plots
+      if (wb.SheetNames.includes('שטחים')) {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets['שטחים'], { header: 1 });
+        data.plots = [];
+        rows.slice(1).forEach(r => {
+          if (r[0]) data.plots.push({ id: Date.now().toString() + Math.random(), name: r[0], age: parseInt(r[1])||5, notes: r[2]||'' });
+        });
+      }
+
+      // Import harvests
+      if (wb.SheetNames.some(n => n.includes('קטיף'))) {
+        const sh = wb.SheetNames.find(n => n.includes('קטיף'));
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[sh], { header: 1 });
+        data.harvests = [];
+        rows.slice(1).forEach(r => {
+          if (!r[0]) return;
+          const plot = data.plots.find(p => p.name === r[2]);
+          data.harvests.push({
+            id: Date.now().toString() + Math.random(),
+            number: r[0], date: r[1], plotName: r[2]||'',
+            plotId: plot ? plot.id : '',
+            plotAge: parseInt(r[3])||5,
+            source: r[4]||'עצמי',
+            bruto: parseInt(r[5])||0,
+            tithePct: parseFloat(r[6])||0,
+            titheReq: parseInt(r[7])||0,
+            titheActual: r[8] !== '' && r[8] != null ? parseFloat(r[8]) : null,
+            neto: parseInt(r[9])||0,
+            notes: r[10]||''
+          });
+        });
+      }
+
+      // Import sorting 1
+      if (wb.SheetNames.some(n => n.includes('ראשוני'))) {
+        const sh = wb.SheetNames.find(n => n.includes('ראשוני'));
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[sh], { header: 1 });
+        data.sortings1 = [];
+        rows.slice(1).forEach(r => {
+          if (!r[0]) return;
+          const h = data.harvests.find(x => x.number === r[0]);
+          data.sortings1.push({
+            id: Date.now().toString() + Math.random(),
+            harvestNumber: r[0], harvestId: h ? h.id : '',
+            date: r[1], inputNeto: parseInt(r[2])||0,
+            g1: parseInt(r[3])||0, g2: parseInt(r[4])||0,
+            g3: parseInt(r[5])||0, waste: parseInt(r[6])||0,
+            notes: r[8]||''
+          });
+        });
+      }
+
+      // Import sorting 2
+      if (wb.SheetNames.some(n => n.includes('מסחרי'))) {
+        const sh = wb.SheetNames.find(n => n.includes('מסחרי'));
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[sh], { header: 1 });
+        data.sortings2 = [];
+        rows.slice(1).forEach(r => {
+          if (!r[0]) return;
+          const s1 = data.sortings1.find(x => x.harvestNumber === r[0]);
+          const h = data.harvests.find(x => x.number === r[0]);
+          data.sortings2.push({
+            id: Date.now().toString() + Math.random(),
+            harvestNumber: r[0],
+            sorting1Id: s1 ? s1.id : '',
+            harvestId: h ? h.id : '',
+            date: r[1], inputG3: parseInt(r[2])||0,
+            g1: parseInt(r[3])||0, g2: parseInt(r[4])||0,
+            g3: parseInt(r[5])||0, waste: parseInt(r[6])||0,
+            notes: r[8]||''
+          });
+        });
+      }
+
+      save(); renderAll();
+      showAlert('✅ קובץ יובא בהצלחה');
+    } catch(err) {
+      showAlert('❌ שגיאה בייבוא: ' + err.message);
+    }
+    input.value = '';
+  };
+  reader.readAsBinaryString(file);
+}
+
+
+// ========== PDF EXPORT ==========
+function exportPDF(section) {
+  const today = new Date().toLocaleDateString('he-IL');
+  const footer = 'הופק במערכת Wisdom, Intelligence, Knowledge — תוכנות מתקדמות';
+  
+  const logoSVG = `<svg width="60" height="60" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="100" cy="115" rx="62" ry="75" fill="#f5e6c3" stroke="#c9a84c" stroke-width="5"/>
+    <path d="M60 100 Q100 90 140 100" stroke="#c9a84c" stroke-width="2" fill="none" opacity="0.5"/>
+    <path d="M55 120 Q100 108 145 120" stroke="#c9a84c" stroke-width="2" fill="none" opacity="0.5"/>
+    <path d="M60 140 Q100 128 140 140" stroke="#c9a84c" stroke-width="2" fill="none" opacity="0.5"/>
+    <path d="M100 40 Q95 30 92 20" stroke="#2d6a4f" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M100 55 Q120 35 135 30 Q120 50 100 55Z" fill="#52b788" stroke="#2d6a4f" stroke-width="1.5"/>
+    <path d="M100 55 Q80 38 68 33 Q82 50 100 55Z" fill="#52b788" stroke="#2d6a4f" stroke-width="1.5"/>
+  </svg>`;
+
+  const header = `
+    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1a3d2b;padding-bottom:12px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        ${logoSVG}
+        <div>
+          <div style="font-size:22px;font-weight:900;color:#1a3d2b;font-family:Arial,sans-serif;">אתרוגי לוריא בע"מ</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px;">ח.פ. 516151610  |  רח' הרב מרדכי ש. אשכנזי 10, כפר חב"ד  |  טל. 03-9606741</div>
+          <div style="font-size:11px;color:#6b7280;">lurietorgim@gmail.com</div>
+        </div>
+      </div>
+      <div style="text-align:left;font-size:11px;color:#6b7280;">
+        <div>תאריך הפקה: ${today}</div>
+      </div>
+    </div>`;
+
+  const footerHtml = `
+    <div style="border-top:2px solid #d8f3dc;margin-top:32px;padding-top:10px;text-align:center;font-size:10px;color:#6b7280;font-family:Arial,sans-serif;">
+      ${footer}
+    </div>`;
+
+  let title = '';
+  let tableHtml = '';
+
+  if (section === 'plots') {
+    title = 'רשימת שטחים וחלקות';
+    tableHtml = `<table style="${tStyle()}">
+      <thead><tr>
+        ${['שם שטח/חלקה','גיל עצים','חובת מעשר','הערות'].map(h=>`<th style="${thStyle()}">${h}</th>`).join('')}
+      </tr></thead><tbody>
+      ${data.plots.map((p,i) => `<tr style="${i%2?'background:#f9fafb':''}">
+        <td style="${tdStyle()}"><strong>${p.name}</strong></td>
+        <td style="${tdStyle()}">${p.age} שנים</td>
+        <td style="${tdStyle()}">${p.age>=5?'חובה ✓':'פטור'}</td>
+        <td style="${tdStyle()}">${p.notes||'—'}</td>
+      </tr>`).join('')}
+      </tbody></table>`;
+
+  } else if (section === 'harvest') {
+    title = 'גליון 1 — רישום קטיפים';
+    const totalBruto = data.harvests.reduce((a,h)=>a+h.bruto,0);
+    const totalNeto  = data.harvests.reduce((a,h)=>a+h.neto,0);
+    const totalTithe = data.harvests.reduce((a,h)=>a+(h.titheActual!==null?h.titheActual:h.titheReq),0);
+    tableHtml = `<table style="${tStyle()}">
+      <thead><tr>
+        ${["מס' קטיף","תאריך","שטח","גיל","מקור","ברוטו","מעשר%","מעשר נדרש","מעשר סופי","נטו לאריזה","הערות"].map(h=>`<th style="${thStyle()}">${h}</th>`).join('')}
+      </tr></thead><tbody>
+      ${data.harvests.map((h,i)=>`<tr style="${i%2?'background:#f9fafb':''}">
+        <td style="${tdStyle()}"><strong>${h.number}</strong></td>
+        <td style="${tdStyle()}">${h.date}</td>
+        <td style="${tdStyle()}">${h.plotName}</td>
+        <td style="${tdStyle()}">${h.plotAge}</td>
+        <td style="${tdStyle()}">${h.source}</td>
+        <td style="${tdStyle()};font-weight:600">${h.bruto.toLocaleString()}</td>
+        <td style="${tdStyle()}">${h.tithePct||0}%</td>
+        <td style="${tdStyle()}">${h.titheReq?h.titheReq.toLocaleString():'—'}</td>
+        <td style="${tdStyle()}">${h.titheActual!==null?h.titheActual.toLocaleString():'—'}</td>
+        <td style="${tdStyle()};color:#2d6a4f;font-weight:700">${h.neto.toLocaleString()}</td>
+        <td style="${tdStyle()}">${h.notes||'—'}</td>
+      </tr>`).join('')}
+      <tr style="background:#1a3d2b;color:white;font-weight:700">
+        <td style="${tdStyle()};color:white" colspan="5">סהכ</td>
+        <td style="${tdStyle()};color:white">${totalBruto.toLocaleString()}</td>
+        <td style="${tdStyle()};color:white">—</td>
+        <td style="${tdStyle()};color:white">${totalTithe.toLocaleString()}</td>
+        <td style="${tdStyle()};color:white">—</td>
+        <td style="${tdStyle()};color:#86efac">${totalNeto.toLocaleString()}</td>
+        <td style="${tdStyle()};color:white">—</td>
+      </tr>
+      </tbody></table>`;
+
+  } else if (section === 'sorting1') {
+    title = 'גליון 2 — מיון ראשוני';
+    tableHtml = `<table style="${tStyle()}">
+      <thead><tr>
+        ${["מס' קטיף","תאריך מיון","נטו מקטיף","רמה 1 מובחר","רמה 2 בינוני","רמה 3 מסחרי","פסולת","סהכ","הערות"].map(h=>`<th style="${thStyle()}">${h}</th>`).join('')}
+      </tr></thead><tbody>
+      ${data.sortings1.map((s,i)=>{
+        const total=s.g1+s.g2+s.g3+s.waste;
+        return `<tr style="${i%2?'background:#f9fafb':''}">
+          <td style="${tdStyle()}"><strong>${s.harvestNumber}</strong></td>
+          <td style="${tdStyle()}">${s.date}</td>
+          <td style="${tdStyle()};color:#2d6a4f;font-weight:700">${s.inputNeto.toLocaleString()}</td>
+          <td style="${tdStyle()};color:#c9a84c;font-weight:600">${s.g1.toLocaleString()}</td>
+          <td style="${tdStyle()}">${s.g2.toLocaleString()}</td>
+          <td style="${tdStyle()}">${s.g3.toLocaleString()}</td>
+          <td style="${tdStyle()};color:#dc2626">${s.waste.toLocaleString()}</td>
+          <td style="${tdStyle()};font-weight:700;color:${total>s.inputNeto?'#dc2626':'#1a3d2b'}">${total.toLocaleString()}</td>
+          <td style="${tdStyle()}">${s.notes||'—'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>`;
+
+  } else if (section === 'sorting2') {
+    title = 'גליון 3 — מיון מסחרי';
+    tableHtml = `<table style="${tStyle()}">
+      <thead><tr>
+        ${["מס' קטיף","תאריך","קלט רמה 3","מסחרי א'","מסחרי ב'","מסחרי ג'","פסולת","סהכ","הערות"].map(h=>`<th style="${thStyle()}">${h}</th>`).join('')}
+      </tr></thead><tbody>
+      ${data.sortings2.map((s,i)=>{
+        const total=s.g1+s.g2+s.g3+s.waste;
+        return `<tr style="${i%2?'background:#f9fafb':''}">
+          <td style="${tdStyle()}"><strong>${s.harvestNumber}</strong></td>
+          <td style="${tdStyle()}">${s.date}</td>
+          <td style="${tdStyle()};color:#2d6a4f;font-weight:700">${s.inputG3.toLocaleString()}</td>
+          <td style="${tdStyle()};color:#c9a84c;font-weight:600">${s.g1.toLocaleString()}</td>
+          <td style="${tdStyle()}">${s.g2.toLocaleString()}</td>
+          <td style="${tdStyle()}">${s.g3.toLocaleString()}</td>
+          <td style="${tdStyle()};color:#dc2626">${s.waste.toLocaleString()}</td>
+          <td style="${tdStyle()};font-weight:700">${total.toLocaleString()}</td>
+          <td style="${tdStyle()}">${s.notes||'—'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>`;
+
+  } else if (section === 'reports') {
+    title = 'דוח מסכם — מעקב מלאי מלא';
+    const rows = data.harvests.map(h => {
+      const s1 = data.sortings1.find(s=>s.harvestId===h.id);
+      const s2 = s1 ? data.sortings2.find(s=>s.sorting1Id===s1.id) : null;
+      const titheUsed = h.titheActual!==null?h.titheActual:h.titheReq;
+      const waste = (s1?s1.waste:0)+(s2?s2.waste:0);
+      let status = s2?'הושלם':s1?'מיון ראשוני':'קטיף בלבד';
+      return {h,s1,s2,titheUsed,waste,status};
+    });
+
+    // Summary stats
+    const totalBruto = data.harvests.reduce((a,h)=>a+h.bruto,0);
+    const totalNeto  = data.harvests.reduce((a,h)=>a+h.neto,0);
+    const totalG1 = data.sortings1.reduce((a,s)=>a+s.g1,0);
+    const totalG2 = data.sortings1.reduce((a,s)=>a+s.g2,0);
+    const totalG3 = data.sortings1.reduce((a,s)=>a+s.g3,0);
+
+    const statsHtml = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+      ${[
+        ['קטיפים', data.harvests.length],
+        ['סהכ ברוטו', totalBruto.toLocaleString()],
+        ['נטו לאריזה', totalNeto.toLocaleString()],
+        ['מובחר (1)', totalG1.toLocaleString()],
+        ['בינוני (2)', totalG2.toLocaleString()],
+        ['מסחרי (3)', totalG3.toLocaleString()],
+        ['מיונים ראשוניים', data.sortings1.length],
+        ['מיונים מסחריים', data.sortings2.length],
+      ].map(([l,v])=>`<div style="background:#d8f3dc;border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:20px;font-weight:900;color:#1a3d2b">${v}</div>
+        <div style="font-size:10px;color:#2d6a4f;margin-top:2px">${l}</div>
+      </div>`).join('')}
+    </div>`;
+
+    tableHtml = statsHtml + `<table style="${tStyle()}">
+      <thead><tr>
+        ${["מס' קטיף","תאריך","שטח","ברוטו","מעשר","נטו","רמה 1","רמה 2","רמה 3","מסח' א","מסח' ב","מסח' ג","פסולת","סטטוס"].map(h=>`<th style="${thStyle()}">${h}</th>`).join('')}
+      </tr></thead><tbody>
+      ${rows.map(({h,s1,s2,titheUsed,waste,status},i)=>`<tr style="${i%2?'background:#f9fafb':''}">
+        <td style="${tdStyle()}"><strong>${h.number}</strong></td>
+        <td style="${tdStyle()}">${h.date}</td>
+        <td style="${tdStyle()}">${h.plotName}</td>
+        <td style="${tdStyle()}">${h.bruto.toLocaleString()}</td>
+        <td style="${tdStyle()}">${titheUsed?titheUsed.toLocaleString():'—'}</td>
+        <td style="${tdStyle()};color:#2d6a4f;font-weight:700">${h.neto.toLocaleString()}</td>
+        <td style="${tdStyle()}">${s1?s1.g1.toLocaleString():'—'}</td>
+        <td style="${tdStyle()}">${s1?s1.g2.toLocaleString():'—'}</td>
+        <td style="${tdStyle()}">${s1?s1.g3.toLocaleString():'—'}</td>
+        <td style="${tdStyle()}">${s2?s2.g1.toLocaleString():'—'}</td>
+        <td style="${tdStyle()}">${s2?s2.g2.toLocaleString():'—'}</td>
+        <td style="${tdStyle()}">${s2?s2.g3.toLocaleString():'—'}</td>
+        <td style="${tdStyle()};color:#dc2626">${waste?waste.toLocaleString():'—'}</td>
+        <td style="${tdStyle()}">${status}</td>
+      </tr>`).join('')}
+      </tbody></table>`;
+  }
+
+  const sectionTitles = {
+    plots:'שטחים',harvest:'קטיף',sorting1:'מיון ראשוני',sorting2:'מיון מסחרי',reports:'דוח מסכם'
+  };
+
+  const fullHtml = `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<title>${title} - אתרוגי לוריא</title>
+<style>
+  body { font-family: Arial, sans-serif; direction: rtl; margin: 0; padding: 28px; color: #1f2937; background:#fff; }
+  @media print { body { padding: 16px; } }
+</style>
+</head>
+<body>
+  ${header}
+  <h2 style="color:#1a3d2b;font-size:17px;margin:0 0 16px;font-family:Arial,sans-serif;">${title}</h2>
+  ${tableHtml}
+  ${footerHtml}
+  <script>window.onload=()=>{ window.print(); }<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=1100,height=800');
+  win.document.write(fullHtml);
+  win.document.close();
+}
+
+function tStyle() {
+  return 'width:100%;border-collapse:collapse;font-size:11px;font-family:Arial,sans-serif;';
+}
+function thStyle() {
+  return 'background:#1a3d2b;color:white;padding:9px 8px;text-align:right;font-size:11px;white-space:nowrap;';
+}
+function tdStyle() {
+  return 'padding:8px;border-bottom:1px solid #e5e7eb;font-size:11px;';
+}
+
+// ========== INIT ==========
+function renderAll() {
+  renderPlots();
+  renderHarvests();
+  renderSortings1();
+  renderSortings2();
+  refreshPlotSelects();
+  updateBadges();
+  updateNextNum();
+}
+
+load();
+renderAll();
+</script>
+</body>
+</html>
