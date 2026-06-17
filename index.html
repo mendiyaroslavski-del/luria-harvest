@@ -1061,13 +1061,14 @@ function renderHarvests() {
   const tbody = document.getElementById('harvest-tbody');
   document.getElementById('harvest-count').textContent = data.harvests.length + ' רשומות';
   if (!data.harvests.length) {
-    tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state"><span>🌾</span>אין קטיפים רשומים</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13"><div class="empty-state"><span>🌾</span>אין קטיפים רשומים</div></td></tr>';
     return;
   }
   tbody.innerHTML = data.harvests.map(h => `
     <tr>
       <td><strong>${h.number}</strong></td>
       <td>${h.date}</td>
+      <td style="font-size:11px;color:#c9a84c;white-space:nowrap">${toHebrewDate(h.date)}</td>
       <td>${h.plotName}</td>
       <td>${h.plotAge}</td>
       <td>${h.source === 'מבחוץ'
@@ -1774,25 +1775,51 @@ function toHebrewDate(dateStr) {
   if (!dateStr) return '';
   try {
     const d = new Date(dateStr + 'T12:00:00');
-    // Get parts separately to format as "ב' תמוז תשפ״ו"
     const parts = new Intl.DateTimeFormat('he-u-ca-hebrew', {
       year: 'numeric', month: 'long', day: 'numeric'
     }).formatToParts(d);
-    const dayPart  = (parts.find(p=>p.type==='day')||{}).value||'';
-    const monthPart= (parts.find(p=>p.type==='month')||{}).value||'';
-    const yearPart = (parts.find(p=>p.type==='year')||{}).value||'';
-    // Convert numeric day to Hebrew letter form (א׳ ב׳ ...)
+    const dayPart   = (parts.find(p=>p.type==='day')||{}).value||'';
+    const monthPart = (parts.find(p=>p.type==='month')||{}).value||'';
+    const yearPart  = (parts.find(p=>p.type==='year')||{}).value||'';
+
+    // יום: המרה מספר לאות עברית
     function numToHebLetter(n) {
-      const units  = ['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
-      const tens   = ['','י','כ','ל'];
+      const units = ['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+      const tens  = ['','י','כ','ל'];
       n = parseInt(n);
+      if (isNaN(n)||n<1) return '';
       if (n===15) return 'ט״ו';
       if (n===16) return 'ט״ז';
       if (n<=9)   return units[n]+'׳';
       const t=Math.floor(n/10), u=n%10;
       return u ? tens[t]+'״'+units[u] : tens[t]+'׳';
     }
-    return numToHebLetter(dayPart) + ' ' + monthPart + ' ' + yearPart;
+
+    // שנה: המרת מספר (5786) לאותיות עבריות (תשפ״ו)
+    function yearToHeb(yearNum) {
+      yearNum = parseInt(yearNum);
+      if (isNaN(yearNum)) return String(yearNum||'');
+      // רק אלפי חמישי - מסירים 5000
+      const y = yearNum - 5000;
+      const hundreds = ['','ק','ר','ש','ת'];
+      const tens     = ['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
+      const units    = ['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+      const h = Math.floor(y/100);
+      const t = Math.floor((y%100)/10);
+      const u = y%10;
+      let letters = '';
+      if (h>0) letters += hundreds[h]||'';
+      // הימנעות מ-יה ויו
+      if (t===1 && u===5) { letters += 'ט״ו'; return letters; }
+      if (t===1 && u===6) { letters += 'ט״ז'; return letters; }
+      if (t>0) letters += tens[t]||'';
+      if (u>0) letters += units[u]||'';
+      // הוספת גרשיים לפני האות האחרונה
+      if (letters.length===1) return letters+'׳';
+      return letters.slice(0,-1) + '״' + letters.slice(-1);
+    }
+
+    return numToHebLetter(dayPart) + ' ' + monthPart + ' ' + yearToHeb(yearPart);
   } catch(e) { return ''; }
 }
 
