@@ -614,7 +614,8 @@
               <th>תאריך עברי</th>
               <th>שטח</th>
               <th>ברוטו</th>
-              <th>מעשר</th>
+              <th>מעשר נדרש %</th>
+              <th>מעשר בפועל</th>
               <th>נטו לאריזה</th>
               <th>רמה 1</th>
               <th>רמה 2</th>
@@ -917,9 +918,13 @@ function refreshPlotSelects() {
 
 // ========== HARVEST ==========
 function getNextHarvestNum() {
-  const nums = data.harvests.map(h => parseInt(h.number.replace('K-', ''))).filter(n => !isNaN(n));
+  const yy = String(new Date().getFullYear()).slice(-2);
+  const nums = data.harvests.map(h => {
+    const m = h.number.match(/^K(\d+)/);
+    return m ? parseInt(m[1]) : NaN;
+  }).filter(n => !isNaN(n));
   const next = nums.length ? Math.max(...nums) + 1 : 1;
-  return 'K-' + String(next).padStart(3, '0');
+  return 'K' + String(next).padStart(3, '0') + '/' + yy;
 }
 
 function updateNextNum() {
@@ -1385,7 +1390,8 @@ function renderReports() {
       <td style="font-size:11px;color:#c9a84c">${toHebrewDate(h.date)}</td>
       <td>${h.plotName}</td>
       <td class="td-num">${h.bruto.toLocaleString()}</td>
-      <td class="td-num">${titheUsed ? titheUsed.toLocaleString() : '—'}</td>
+      <td class="td-num">${h.titheReq ? h.titheReq.toLocaleString() + ' (' + (h.tithePct||0) + '%)' : '—'}</td>
+      <td class="td-num">${h.titheActual !== null ? h.titheActual.toLocaleString() : (h.titheReq ? h.titheReq.toLocaleString() : '—')}</td>
       <td class="td-num text-green">${h.neto.toLocaleString()}</td>
       <td class="td-num">${s1 ? s1.g1.toLocaleString() : '—'}</td>
       <td class="td-num">${s1 ? s1.g2.toLocaleString() : '—'}</td>
@@ -1768,7 +1774,25 @@ function toHebrewDate(dateStr) {
   if (!dateStr) return '';
   try {
     const d = new Date(dateStr + 'T12:00:00');
-    return d.toLocaleDateString('he-u-ca-hebrew', {year: 'numeric', month: 'long', day: 'numeric'});
+    // Get parts separately to format as "ב' תמוז תשפ״ו"
+    const parts = new Intl.DateTimeFormat('he-u-ca-hebrew', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    }).formatToParts(d);
+    const dayPart  = (parts.find(p=>p.type==='day')||{}).value||'';
+    const monthPart= (parts.find(p=>p.type==='month')||{}).value||'';
+    const yearPart = (parts.find(p=>p.type==='year')||{}).value||'';
+    // Convert numeric day to Hebrew letter form (א׳ ב׳ ...)
+    function numToHebLetter(n) {
+      const units  = ['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+      const tens   = ['','י','כ','ל'];
+      n = parseInt(n);
+      if (n===15) return 'ט״ו';
+      if (n===16) return 'ט״ז';
+      if (n<=9)   return units[n]+'׳';
+      const t=Math.floor(n/10), u=n%10;
+      return u ? tens[t]+'״'+units[u] : tens[t]+'׳';
+    }
+    return numToHebLetter(dayPart) + ' ' + monthPart + ' ' + yearPart;
   } catch(e) { return ''; }
 }
 
