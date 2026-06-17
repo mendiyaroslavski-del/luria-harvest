@@ -313,8 +313,10 @@
     inset: 0;
     background: rgba(0,0,0,0.5);
     z-index: 999;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    overflow-y: auto;
+    padding: 16px 0 32px;
   }
   .modal-overlay.open { display: flex; }
   .modal {
@@ -325,6 +327,7 @@
     max-width: 500px;
     box-shadow: var(--shadow-lg);
     direction: rtl;
+    margin: auto;
   }
   .modal-title { font-size: 18px; font-weight: 700; color: var(--green-deep); margin-bottom: 20px; }
 
@@ -499,7 +502,7 @@
         </div>
       </div>
       <div class="table-wrap">
-        <table>
+        <table style="min-width:900px">
           <thead>
             <tr>
               <th>מס' קטיף</th>
@@ -537,19 +540,21 @@
         ℹ️ סהכ רמה 1 + רמה 2 + רמה 3 + פסולת חייב להיות ≤ נטו מהקטיף
       </div>
 
-      <div class="table-wrap">
-        <table>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table style="min-width:900px">
           <thead>
             <tr>
               <th>מס' קטיף</th>
               <th>תאריך מיון</th>
               <th>תאריך עברי</th>
               <th>נטו מקטיף</th>
-              <th>רמה 1 (מובחר)</th>
-              <th>רמה 2 (בינוני)</th>
-              <th>רמה 3 (מסחרי)</th>
+              <th>🥇 רמה 1</th>
+              <th>🥈 רמה 2</th>
+              <th>🥉 רמה 3</th>
               <th>פסולת</th>
               <th>סהכ</th>
+              <th>שארית</th>
+              <th>בלאי כולל</th>
               <th>הערות</th>
               <th>פעולות</th>
             </tr>
@@ -574,7 +579,7 @@
         ℹ️ מיון מסחרי מקבל את הפירות מרמה 3 של המיון הראשוני ומחלק אותם לתת-רמות
       </div>
       <div class="table-wrap">
-        <table>
+        <table style="min-width:850px">
           <thead>
             <tr>
               <th>מס' קטיף</th>
@@ -606,7 +611,7 @@
         <button class="btn btn-secondary btn-sm" onclick="exportPDF('reports')">📄 ייצוא PDF</button>
       </div>
       <div class="table-wrap">
-        <table>
+        <table style="min-width:850px">
           <thead>
             <tr>
               <th>מס' קטיף</th>
@@ -704,8 +709,21 @@
         <input type="number" id="s1-waste" min="0" value="0" oninput="calcS1()">
       </div>
       <div class="field">
-        <label>סהכ (בדיקה)</label>
-        <input type="number" id="s1-total" readonly>
+        <label>סהכ שהוזן</label>
+        <input type="number" id="s1-total" readonly style="background:#f0f0f0;color:#555">
+      </div>
+    </div>
+    <div style="background:#f8fdf8;border:1px solid #c3e6cb;border-radius:8px;padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:#2d6a4f;margin-bottom:8px">📊 חישוב אוטומטי</div>
+      <div class="form-grid">
+        <div class="field">
+          <label style="color:#2d6a4f">🔢 שארית (לא מוין)</label>
+          <input type="number" id="s1-remainder" readonly style="background:#e8f5e9;color:#2d6a4f;font-weight:700;font-size:16px">
+        </div>
+        <div class="field">
+          <label style="color:#856404">⚠️ בלאי סה"כ</label>
+          <input type="number" id="s1-totalwaste" readonly style="background:#fff3cd;color:#856404;font-weight:700;font-size:16px">
+        </div>
       </div>
     </div>
     <div id="s1-warning" class="warn-box" style="display:none"></div>
@@ -832,7 +850,15 @@ function showAlert(msg) {
 }
 
 // ========== MODAL ==========
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id) {
+  const el = document.getElementById(id);
+  el.classList.add('open');
+  setTimeout(() => {
+    const inner = el.querySelector('.modal');
+    if (inner) inner.scrollTop = 0;
+    el.scrollTop = 0;
+  }, 10);
+}
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
@@ -1112,7 +1138,9 @@ function openSorting1Modal(id) {
     document.getElementById('s1-id').value = '';
     document.getElementById('s1-input').value = '';
     ['s1-g1','s1-g2','s1-g3','s1-waste'].forEach(f => document.getElementById(f).value = 0);
-    document.getElementById('s1-total').value = '';
+    document.getElementById('s1-total').value = 0;
+    document.getElementById('s1-remainder').value = 0;
+    document.getElementById('s1-totalwaste').value = 0;
     document.getElementById('s1-notes').value = '';
     document.getElementById('s1-warning').style.display = 'none';
   }
@@ -1134,6 +1162,11 @@ function calcS1() {
   const total = g1 + g2 + g3 + waste;
   const input = parseInt(document.getElementById('s1-input').value) || 0;
   document.getElementById('s1-total').value = total;
+  // שארית = נטו מקטיף פחות מה שהוזן (עוד לא מוין)
+  const remainder = Math.max(0, input - total);
+  document.getElementById('s1-remainder').value = remainder;
+  // בלאי = פסולת שהוזנה + שארית (שלא עברה מיון)
+  document.getElementById('s1-totalwaste').value = waste + remainder;
   const warn = document.getElementById('s1-warning');
   if (input && total > input) {
     warn.style.display = 'block';
@@ -1157,6 +1190,13 @@ function saveSorting1() {
   const notes = document.getElementById('s1-notes').value.trim();
   const existId = document.getElementById('s1-id').value;
 
+  // מספור אוטומטי: מספר קטיף K001/26 → מספר הקטיף (1) → 1XX, 2XX, 3XX
+  function getSortNum(harvestNum, grade) {
+    const m = harvestNum.match(/K(\d+)/i);
+    const seq = m ? parseInt(m[1]) : 1;
+    return (grade * 100) + seq;
+  }
+
   if (existId) {
     const s = data.sortings1.find(x => x.id === existId);
     Object.assign(s, { date, g1, g2, g3, waste, notes });
@@ -1164,7 +1204,10 @@ function saveSorting1() {
     data.sortings1.push({
       id: Date.now().toString(), harvestId: hid,
       harvestNumber: h.number, plotName: h.plotName,
-      inputNeto: h.neto, date, g1, g2, g3, waste, notes
+      inputNeto: h.neto, date, g1, g2, g3, waste, notes,
+      numG1: getSortNum(h.number, 1),
+      numG2: getSortNum(h.number, 2),
+      numG3: getSortNum(h.number, 3)
     });
   }
   save(); closeModal('s1-modal'); renderSortings1(); updateBadges();
@@ -1182,22 +1225,35 @@ function deleteSorting1(id) {
 function renderSortings1() {
   const tbody = document.getElementById('sorting1-tbody');
   if (!data.sortings1.length) {
-    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><span>📦</span>אין מיונים ראשוניים</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state"><span>📦</span>אין מיונים ראשוניים</div></td></tr>';
     return;
   }
   tbody.innerHTML = data.sortings1.map(s => {
     const total = s.g1 + s.g2 + s.g3 + s.waste;
+    const remainder = Math.max(0, s.inputNeto - total);
+    const totalWaste = s.waste + remainder;
     const ok = total <= s.inputNeto;
+    // מספרים אוטומטיים
+    function getSortNum(harvestNum, grade) {
+      const m = harvestNum.match(/K(\d+)/i);
+      const seq = m ? parseInt(m[1]) : 1;
+      return (grade * 100) + seq;
+    }
+    const n1 = s.numG1 || getSortNum(s.harvestNumber, 1);
+    const n2 = s.numG2 || getSortNum(s.harvestNumber, 2);
+    const n3 = s.numG3 || getSortNum(s.harvestNumber, 3);
     return `<tr>
       <td><strong>${s.harvestNumber}</strong></td>
       <td>${s.date}</td>
       <td style="font-size:14px;color:#c9a84c">${toHebrewDate(s.date)}</td>
       <td class="td-num">${s.inputNeto.toLocaleString()}</td>
-      <td class="td-num text-green">${s.g1.toLocaleString()}</td>
-      <td class="td-num">${s.g2.toLocaleString()}</td>
-      <td class="td-num">${s.g3.toLocaleString()}</td>
+      <td class="td-num text-green">${s.g1.toLocaleString()}<br><span style="font-size:10px;color:#888">מס׳ ${n1}</span></td>
+      <td class="td-num">${s.g2.toLocaleString()}<br><span style="font-size:10px;color:#888">מס׳ ${n2}</span></td>
+      <td class="td-num">${s.g3.toLocaleString()}<br><span style="font-size:10px;color:#888">מס׳ ${n3}</span></td>
       <td class="td-num text-red">${s.waste.toLocaleString()}</td>
-      <td class="td-num ${ok ? 'text-green' : 'text-red'}">${total.toLocaleString()}</td>
+      <td class="td-num ${ok ? '' : 'text-red'}">${total.toLocaleString()}</td>
+      <td class="td-num" style="color:#2d6a4f">${remainder.toLocaleString()}</td>
+      <td class="td-num" style="color:#856404">${totalWaste.toLocaleString()}</td>
       <td>${s.notes || '—'}</td>
       <td>
         <div class="btn-group">
