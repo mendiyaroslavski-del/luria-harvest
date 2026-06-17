@@ -1594,6 +1594,7 @@ function exportPDF(section) {
       ${data.harvests.map((h,i)=>`<tr style="${i%2?'background:#f9fafb':''}">
         <td style="${tdStyle()}"><strong>${h.number}</strong></td>
         <td style="${tdStyle()}">${h.date}</td>
+        <td style="${tdStyle()};color:#c9a84c">${toHebrewDate(h.date)}</td>
         <td style="${tdStyle()}">${h.plotName}</td>
         <td style="${tdStyle()}">${h.plotAge}</td>
         <td style="${tdStyle()}">${h.source}</td>
@@ -1605,7 +1606,7 @@ function exportPDF(section) {
         <td style="${tdStyle()}">${h.notes||'—'}</td>
       </tr>`).join('')}
       <tr style="background:#1a3d2b;color:white;font-weight:700">
-        <td style="${tdStyle()};color:white" colspan="5">סהכ</td>
+        <td style="${tdStyle()};color:white" colspan="6">סהכ</td>
         <td style="${tdStyle()};color:white">${totalBruto.toLocaleString()}</td>
         <td style="${tdStyle()};color:white">—</td>
         <td style="${tdStyle()};color:white">${totalTithe.toLocaleString()}</td>
