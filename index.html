@@ -1068,7 +1068,7 @@ function renderHarvests() {
     <tr>
       <td><strong>${h.number}</strong></td>
       <td>${h.date}</td>
-      <td style="font-size:11px;color:#c9a84c;white-space:nowrap">${toHebrewDate(h.date)}</td>
+      <td style="font-size:14px;color:#c9a84c;white-space:nowrap">${toHebrewDate(h.date)}</td>
       <td>${h.plotName}</td>
       <td>${h.plotAge}</td>
       <td>${h.source === 'מבחוץ'
@@ -1191,7 +1191,7 @@ function renderSortings1() {
     return `<tr>
       <td><strong>${s.harvestNumber}</strong></td>
       <td>${s.date}</td>
-      <td style="font-size:11px;color:#c9a84c">${toHebrewDate(s.date)}</td>
+      <td style="font-size:14px;color:#c9a84c">${toHebrewDate(s.date)}</td>
       <td class="td-num">${s.inputNeto.toLocaleString()}</td>
       <td class="td-num text-green">${s.g1.toLocaleString()}</td>
       <td class="td-num">${s.g2.toLocaleString()}</td>
@@ -1315,7 +1315,7 @@ function renderSortings2() {
     return `<tr>
       <td><strong>${s.harvestNumber}</strong></td>
       <td>${s.date}</td>
-      <td style="font-size:11px;color:#c9a84c">${toHebrewDate(s.date)}</td>
+      <td style="font-size:14px;color:#c9a84c">${toHebrewDate(s.date)}</td>
       <td class="td-num">${s.inputG3.toLocaleString()}</td>
       <td class="td-num text-green">${s.g1.toLocaleString()}</td>
       <td class="td-num">${s.g2.toLocaleString()}</td>
@@ -1388,7 +1388,7 @@ function renderReports() {
     return `<tr>
       <td><strong>${h.number}</strong></td>
       <td>${h.date}</td>
-      <td style="font-size:11px;color:#c9a84c">${toHebrewDate(h.date)}</td>
+      <td style="font-size:14px;color:#c9a84c">${toHebrewDate(h.date)}</td>
       <td>${h.plotName}</td>
       <td class="td-num">${h.bruto.toLocaleString()}</td>
       <td class="td-num">${h.titheReq ? h.titheReq.toLocaleString() + ' (' + (h.tithePct||0) + '%)' : '—'}</td>
