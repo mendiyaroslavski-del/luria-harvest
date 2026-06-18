@@ -553,7 +553,6 @@
               <th>🥉 רמה 3</th>
               <th>פסולת</th>
               <th>סהכ</th>
-              <th>שארית</th>
               <th>בלאי כולל</th>
               <th>הערות</th>
               <th>פעולות</th>
@@ -715,15 +714,9 @@
     </div>
     <div style="background:#f8fdf8;border:1px solid #c3e6cb;border-radius:8px;padding:12px;margin-bottom:14px">
       <div style="font-size:12px;font-weight:600;color:#2d6a4f;margin-bottom:8px">📊 חישוב אוטומטי</div>
-      <div class="form-grid">
-        <div class="field">
-          <label style="color:#2d6a4f">🔢 שארית (לא מוין)</label>
-          <input type="number" id="s1-remainder" readonly style="background:#e8f5e9;color:#2d6a4f;font-weight:700;font-size:16px">
-        </div>
-        <div class="field">
-          <label style="color:#856404">⚠️ בלאי סה"כ</label>
-          <input type="number" id="s1-totalwaste" readonly style="background:#fff3cd;color:#856404;font-weight:700;font-size:16px">
-        </div>
+      <div class="field">
+        <label style="color:#856404">⚠️ בלאי סה"כ (נטו פחות כל הרמות)</label>
+        <input type="number" id="s1-totalwaste" readonly style="background:#fff3cd;color:#856404;font-weight:700;font-size:16px">
       </div>
     </div>
     <div id="s1-warning" class="warn-box" style="display:none"></div>
@@ -1139,7 +1132,6 @@ function openSorting1Modal(id) {
     document.getElementById('s1-input').value = '';
     ['s1-g1','s1-g2','s1-g3','s1-waste'].forEach(f => document.getElementById(f).value = 0);
     document.getElementById('s1-total').value = 0;
-    document.getElementById('s1-remainder').value = 0;
     document.getElementById('s1-totalwaste').value = 0;
     document.getElementById('s1-notes').value = '';
     document.getElementById('s1-warning').style.display = 'none';
@@ -1162,11 +1154,9 @@ function calcS1() {
   const total = g1 + g2 + g3 + waste;
   const input = parseInt(document.getElementById('s1-input').value) || 0;
   document.getElementById('s1-total').value = total;
-  // שארית = נטו מקטיף פחות מה שהוזן (עוד לא מוין)
-  const remainder = Math.max(0, input - total);
-  document.getElementById('s1-remainder').value = remainder;
-  // בלאי = פסולת שהוזנה + שארית (שלא עברה מיון)
-  document.getElementById('s1-totalwaste').value = waste + remainder;
+  // בלאי = נטו פחות (רמה1 + רמה2 + רמה3) — כל מה שלא שויך לרמה הוא בלאי
+  const waste_auto = input ? Math.max(0, input - g1 - g2 - g3) : waste;
+  document.getElementById('s1-totalwaste').value = waste_auto;
   const warn = document.getElementById('s1-warning');
   if (input && total > input) {
     warn.style.display = 'block';
@@ -1230,8 +1220,7 @@ function renderSortings1() {
   }
   tbody.innerHTML = data.sortings1.map(s => {
     const total = s.g1 + s.g2 + s.g3 + s.waste;
-    const remainder = Math.max(0, s.inputNeto - total);
-    const totalWaste = s.waste + remainder;
+    const totalWaste = Math.max(0, s.inputNeto - s.g1 - s.g2 - s.g3);
     const ok = total <= s.inputNeto;
     // מספרים אוטומטיים
     function getSortNum(harvestNum, grade) {
@@ -1252,7 +1241,6 @@ function renderSortings1() {
       <td class="td-num">${s.g3.toLocaleString()}<br><span style="font-size:10px;color:#888">מס׳ ${n3}</span></td>
       <td class="td-num text-red">${s.waste.toLocaleString()}</td>
       <td class="td-num ${ok ? '' : 'text-red'}">${total.toLocaleString()}</td>
-      <td class="td-num" style="color:#2d6a4f">${remainder.toLocaleString()}</td>
       <td class="td-num" style="color:#856404">${totalWaste.toLocaleString()}</td>
       <td>${s.notes || '—'}</td>
       <td>
